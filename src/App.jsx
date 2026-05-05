@@ -311,16 +311,32 @@ export default function App(){
         textarea:focus{outline:none;border-color:${P.s400}}
         ::-webkit-scrollbar{height:4px;width:6px}
         ::-webkit-scrollbar-thumb{background:${P.s300};border-radius:3px}
-        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+        
+        /* Responsive Classes */
+        .app-header { padding: 32px 24px 24px; }
+        .app-nav { padding: 16px 24px 0; }
+        .app-main { padding: 20px 24px 48px; }
+        .header-title { font-size: 19px; }
+        .action-btns { padding: 0 16px 6px 46px; }
+        .panel { margin: 0 16px 8px 46px; padding: 12px 14px; }
+
+        @media (max-width: 600px) {
+          .app-header { padding: 24px 16px 20px; }
+          .app-nav { padding: 16px 16px 0; }
+          .app-main { padding: 20px 16px 48px; }
+          .header-title { font-size: 17.5px; }
+          .action-btns { padding: 0 12px 8px 36px; flex-wrap: wrap; }
+          .panel { margin: 0 12px 10px 36px; padding: 12px 12px; }
+        }
       `}</style>
 
       {/* Header */}
-      <header style={{background:P.s900,padding:"32px 24px 24px",color:P.s50}}>
+      <header className="app-header" style={{background:P.s900,color:P.s50}}>
         <div style={{maxWidth:860,margin:"0 auto"}}>
           <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:22}}>
             <div style={{width:38,height:38,borderRadius:10,background:"linear-gradient(135deg,#5a7260,#7a9680)",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 10px rgba(90,114,96,.35)"}}>{I.layers("#fff")}</div>
             <div>
-              <h1 style={{fontSize:19,fontWeight:800,letterSpacing:"-.03em",lineHeight:1.15}}>GAMO &rarr; ISO 9001</h1>
+              <h1 className="header-title" style={{fontWeight:800,letterSpacing:"-.03em",lineHeight:1.15}}>GAMO &rarr; ISO 9001</h1>
               <p style={{fontSize:11.5,color:P.s400,marginTop:2,fontWeight:500}}>Roadmap de profesionalización organizacional</p>
             </div>
           </div>
@@ -344,7 +360,7 @@ export default function App(){
       </header>
 
       {/* Tabs */}
-      <nav style={{maxWidth:860,margin:"0 auto",padding:"16px 24px 0",display:"flex",gap:5,overflowX:"auto",WebkitOverflowScrolling:"touch"}}>
+      <nav className="app-nav" style={{maxWidth:860,margin:"0 auto",display:"flex",gap:5,overflowX:"auto",WebkitOverflowScrolling:"touch"}}>
         {data.map((p,i)=>{
           const{d,t}=cnt(p);const on=p.id===active;const c=TH[i];
           return <button key={p.id} className="tab" onClick={()=>{setActive(p.id);persist(data,workText,p.id);}} style={{flexShrink:0,padding:"11px 14px",borderRadius:10,background:on?c.main:"#fff",color:on?"#fff":P.s500,fontSize:11.5,fontWeight:600,boxShadow:on?`0 3px 14px ${c.main}20`:"0 1px 2px rgba(0,0,0,.04)",border:on?"none":`1px solid ${P.border}`,display:"flex",flexDirection:"column",alignItems:"center",gap:5,minWidth:76}}>
@@ -356,7 +372,7 @@ export default function App(){
       </nav>
 
       {/* Content */}
-      {ap&&<main style={{maxWidth:860,margin:"0 auto",padding:"20px 24px 48px"}}>
+      {ap&&<main className="app-main" style={{maxWidth:860,margin:"0 auto"}}>
         <div style={{marginBottom:18}}>
           <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:5}}>
             {I[ap.iconKey](th.main)}
@@ -397,7 +413,7 @@ export default function App(){
                   </div>
 
                   {/* Action buttons */}
-                  <div style={{padding:"0 16px 6px 46px",display:"flex",gap:6}}>
+                  <div className="action-btns" style={{display:"flex",gap:6}}>
                     <button className="togbtn" onClick={()=>setOpenGuide(p=>({...p,[gk]:!p[gk]}))} style={{
                       padding:"5px 10px",borderRadius:6,fontSize:11,fontWeight:600,
                       background:gOpen?th.lt:"transparent",color:gOpen?th.main:P.s400,
@@ -418,7 +434,7 @@ export default function App(){
                   </div>
 
                   {/* Guide panel */}
-                  {gOpen&&<div className="anim" style={{margin:"0 16px 8px 46px",padding:"12px 14px",background:th.lt,borderRadius:8,borderLeft:`3px solid ${th.acc}40`,fontSize:12,lineHeight:1.7,color:P.s600}}>
+                  {gOpen&&<div className="anim panel" style={{background:th.lt,borderRadius:8,borderLeft:`3px solid ${th.acc}40`,fontSize:12,lineHeight:1.7,color:P.s600}}>
                     <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6,fontWeight:700,fontSize:11.5,color:th.main,textTransform:"uppercase",letterSpacing:".04em"}}>
                       {I.hint(th.acc)} Guía detallada
                     </div>
@@ -426,7 +442,7 @@ export default function App(){
                   </div>}
 
                   {/* Work panel */}
-                  {wOpen&&<div className="anim" style={{margin:"0 16px 8px 46px",padding:"12px 14px",background:"#fefcf6",borderRadius:8,borderLeft:"3px solid #d4a86030",fontSize:12}}>
+                  {wOpen&&<div className="anim panel" style={{background:"#fefcf6",borderRadius:8,borderLeft:"3px solid #d4a86030",fontSize:12}}>
                     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
                       <div style={{display:"flex",alignItems:"center",gap:6,fontWeight:700,fontSize:11.5,color:"#92613a",textTransform:"uppercase",letterSpacing:".04em"}}>
                         {I.edit("#92613a")} Tu trabajo
