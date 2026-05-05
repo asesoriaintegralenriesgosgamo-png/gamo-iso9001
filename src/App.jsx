@@ -409,7 +409,7 @@ export default function App(){
                   {/* Main row */}
                   <div className="row" onClick={()=>tog(ai,si,ii)} style={{padding:"10px 16px",display:"flex",gap:11,alignItems:"flex-start",cursor:"pointer",borderRadius:0,transition:"background .12s"}}>
                     <div style={{width:19,height:19,borderRadius:5,flexShrink:0,marginTop:1,border:item.done?"none":`1.5px solid ${P.s300}`,background:item.done?th.acc:"transparent",display:"flex",alignItems:"center",justifyContent:"center",transition:"all .2s"}}>{item.done&&I.chk("#fff")}</div>
-                    <span style={{fontSize:12.5,lineHeight:1.55,fontWeight:500,color:item.done?P.s400:P.s700,textDecoration:item.done?"line-through":"none",flex:1}}>{item.text}</span>
+                    <span style={{textAlign:"left",fontSize:12.5,lineHeight:1.55,fontWeight:500,color:item.done?P.s400:P.s700,textDecoration:item.done?"line-through":"none",flex:1}}>{item.text}</span>
                   </div>
 
                   {/* Action buttons */}
