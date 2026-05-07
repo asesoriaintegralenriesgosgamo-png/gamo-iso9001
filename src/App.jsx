@@ -328,8 +328,18 @@ export default function App(){
           .action-btns { padding: 0 12px 8px 36px; flex-wrap: wrap; }
           .panel { margin: 0 12px 10px 36px; padding: 12px 12px; }
         }
+
+        /* Print Classes */
+        .print-only { display: none; }
+        @media print {
+          .no-print { display: none !important; }
+          .print-only { display: block !important; }
+          body { background: white !important; color: black !important; }
+          @page { margin: 2cm; }
+        }
       `}</style>
 
+      <div className="no-print">
       {/* Header */}
       <header className="app-header" style={{background:P.s900,color:P.s50}}>
         <div style={{maxWidth:860,margin:"0 auto"}}>
@@ -341,12 +351,25 @@ export default function App(){
             </div>
           </div>
           <div style={{background:"rgba(255,255,255,.04)",borderRadius:10,padding:"14px 16px",border:"1px solid rgba(255,255,255,.05)"}}>
-            <div style={{display:"flex",justifyContent:"space-between",marginBottom:10,fontSize:11.5,fontWeight:600}}>
-              <span style={{color:P.s400}}>Progreso general</span>
-              <span style={{fontFamily:"'DM Mono',monospace",color:P.s300}}>{gd} de {gt} tareas</span>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:10,alignItems:"flex-end"}}>
+              <div>
+                <div style={{fontSize:11.5,fontWeight:600,color:P.s400,marginBottom:3}}>Progreso general</div>
+                <div style={{fontSize:22,fontWeight:800,color:"#fff",lineHeight:1}}>{gt===0?0:Math.round((gd/gt)*100)}%</div>
+              </div>
+              <div style={{textAlign:"right"}}>
+                <div style={{fontSize:10.5,fontWeight:600,color:P.s400,marginBottom:3,textTransform:"uppercase",letterSpacing:".05em"}}>Meta: 90 días</div>
+                <div style={{fontSize:13,fontWeight:700,color:"#7a9680"}}>{Math.max(0, Math.ceil((new Date("2026-08-04T00:00:00-06:00") - new Date()) / (1000 * 60 * 60 * 24)))} días restantes</div>
+              </div>
             </div>
-            <div style={{height:3,borderRadius:2,background:"rgba(255,255,255,.07)"}}>
+            <div style={{height:4,borderRadius:2,background:"rgba(255,255,255,.07)",marginBottom:10}}>
               <div style={{height:"100%",borderRadius:2,width:`${gt===0?0:(gd/gt)*100}%`,background:"linear-gradient(90deg,#5a7260,#7a9680)",transition:"width .5s cubic-bezier(.25,.46,.45,.94)"}}/>
+            </div>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <span style={{fontSize:11,fontFamily:"'DM Mono',monospace",color:P.s400}}>{gd} de {gt} tareas completadas</span>
+              <button onClick={()=>window.print()} style={{background:"rgba(255,255,255,.1)",border:"none",padding:"5px 10px",borderRadius:5,color:"#fff",fontSize:10.5,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",gap:5,transition:"background .2s"}} onMouseOver={e=>e.currentTarget.style.background="rgba(255,255,255,.2)"} onMouseOut={e=>e.currentTarget.style.background="rgba(255,255,255,.1)"}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                Exportar PDF
+              </button>
             </div>
           </div>
           <button onClick={()=>setCtx(!ctx)} style={{marginTop:8,width:"100%",textAlign:"left",background:"rgba(255,255,255,.02)",border:"1px solid rgba(255,255,255,.05)",borderRadius:8,padding:"9px 13px",color:P.s400,fontSize:11.5,fontWeight:500,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center",fontFamily:"'Montserrat',sans-serif"}}>
@@ -473,6 +496,65 @@ export default function App(){
           </div>;
         })}
       </main>}
+      </div>
+
+      {/* Print View */}
+      <div className="print-only">
+        <div style={{textAlign: "center", marginBottom: "40px", paddingBottom: "20px", borderBottom: `2px solid ${P.s900}`}}>
+          <h1 style={{fontSize: "24px", color: P.s900, marginBottom: "5px"}}>GAMO - Documentación ISO 9001</h1>
+          <p style={{fontSize: "14px", color: P.s500}}>Reporte de avance y desarrollo del Sistema de Gestión de Calidad</p>
+          <p style={{fontSize: "12px", color: P.s400, marginTop: "10px"}}>Generado el {new Date().toLocaleDateString('es-MX')}</p>
+        </div>
+
+        {data.map((p, pi) => {
+          let phaseHasContent = false;
+          const phaseContent = p.sections.map((s, si) => {
+            const itemsWithContent = s.items.map((item, ii) => {
+              const wk = `w-${pi}-${si}-${ii}`;
+              if (workText[wk] && workText[wk].trim() !== "") {
+                phaseHasContent = true;
+                return (
+                  <div key={ii} style={{marginBottom: "20px"}}>
+                    <h4 style={{fontSize: "13px", fontWeight: "bold", color: P.s800, marginBottom: "8px", display:"flex", alignItems:"center", gap:"6px"}}>
+                      <span style={{color: TH[pi].main}}>■</span> {item.text}
+                    </h4>
+                    <div style={{fontSize: "12.5px", whiteSpace: "pre-wrap", color: P.s700, background: "#fdfdfd", padding: "12px 16px", borderLeft: `3px solid ${TH[pi].acc}`, borderRadius: "0 8px 8px 0", lineHeight: 1.6}}>
+                      {workText[wk]}
+                    </div>
+                  </div>
+                );
+              }
+              return null;
+            });
+            
+            if (itemsWithContent.some(i => i !== null)) {
+              return (
+                <div key={si} style={{marginBottom: "30px"}}>
+                  <h3 style={{fontSize: "15px", color: TH[pi].main, borderBottom: `1px solid ${P.s200}`, paddingBottom: "6px", marginBottom: "15px", textTransform:"uppercase", letterSpacing:".03em"}}>{s.title}</h3>
+                  {itemsWithContent}
+                </div>
+              );
+            }
+            return null;
+          });
+
+          if (phaseHasContent) {
+            return (
+              <div key={pi} style={{marginBottom: "40px", pageBreakInside: "avoid"}}>
+                <h2 style={{fontSize: "18px", color: P.s50", background: TH[pi].main, padding: "8px 14px", borderRadius: "6px", marginBottom: "20px", display: "inline-block"}}>{p.phase}: {p.title}</h2>
+                {phaseContent}
+              </div>
+            );
+          }
+          return null;
+        })}
+        
+        {Object.keys(workText).length === 0 && (
+          <div style={{textAlign: "center", color: P.s500, fontStyle: "italic", marginTop: "50px"}}>
+            Aún no hay información documentada en los espacios de trabajo.
+          </div>
+        )}
+      </div>
     </div>
   );
 }
