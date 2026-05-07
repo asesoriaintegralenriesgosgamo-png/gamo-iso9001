@@ -187,12 +187,72 @@ function RiskHeatmapEditor({ value, onChange, config }) {
   );
 }
 
+function PrintHeatmap({ risks }) {
+  // Compact 5x5 heatmap for print: rows = probability (5..1 top→bottom),
+  // cols = impact (1..5 left→right). Cell shows score; risk numbers stacked.
+  return (
+    <table style={{ borderCollapse: "collapse", margin: "0 auto 8pt auto", fontSize: "8pt" }}>
+      <thead>
+        <tr>
+          <th></th>
+          <th colSpan={5} style={{ fontSize: "7.5pt", color: P.s500, textTransform: "uppercase", letterSpacing: ".05em", padding: "2pt 0", fontWeight: 700 }}>Impacto →</th>
+        </tr>
+        <tr>
+          <th></th>
+          {[1, 2, 3, 4, 5].map((i) => (
+            <th key={i} style={{ width: "44pt", fontSize: "7.5pt", color: P.s500, padding: "2pt 0" }}>{i}</th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {[5, 4, 3, 2, 1].map((prob) => (
+          <tr key={prob}>
+            <td style={{ width: "26pt", textAlign: "right", paddingRight: "4pt", fontSize: "7.5pt", color: P.s500, fontWeight: 700 }}>{prob}</td>
+            {[1, 2, 3, 4, 5].map((impact) => {
+              const score = prob * impact;
+              const cellRisks = risks.filter((r) => Number(r.probability) === prob && Number(r.impact) === impact);
+              return (
+                <td key={impact} style={{
+                  height: "32pt",
+                  background: severityColor(score),
+                  border: "1px solid #fff",
+                  textAlign: "center",
+                  verticalAlign: "middle",
+                  color: "#fff",
+                  fontWeight: 700,
+                  padding: "2pt",
+                  fontSize: "8pt",
+                }}>
+                  {cellRisks.length === 0
+                    ? score
+                    : cellRisks.map((r) => `#${risks.indexOf(r) + 1}`).join(" ")}
+                </td>
+              );
+            })}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
 function RiskHeatmapPrinter({ value, accentColor }) {
   const risks = Array.isArray(value?.risks) ? value.risks : [];
   if (risks.length === 0) return null;
   return (
-    <div style={{ borderLeft: `3px solid ${accentColor}`, paddingLeft: 12, fontSize: "11px" }}>
+    <div style={{ borderLeft: `3px solid ${accentColor}`, paddingLeft: 12, fontSize: "9.5pt" }}>
+      <PrintHeatmap risks={risks} />
       <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <colgroup>
+          <col style={{ width: "5%" }} />
+          <col style={{ width: "22%" }} />
+          <col style={{ width: "5%" }} />
+          <col style={{ width: "5%" }} />
+          <col style={{ width: "7%" }} />
+          <col style={{ width: "26%" }} />
+          <col style={{ width: "16%" }} />
+          <col style={{ width: "14%" }} />
+        </colgroup>
         <thead>
           <tr>
             <th style={{ padding: "5px 7px", background: "#f5f5f4", textAlign: "left", fontSize: "10px", fontWeight: 700, color: P.s500, textTransform: "uppercase", borderBottom: `1px solid ${P.s200}` }}>#</th>

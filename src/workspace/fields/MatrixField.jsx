@@ -276,13 +276,37 @@ function MatrixPrinter({ value, config, accentColor }) {
   const cells = v.cells ?? {};
   if (rows.length === 0 || cols.length === 0) return null;
 
+  // For wide matrices, rotate column headers 90° to fit A4 width.
+  const rotateHeaders = cols.length > 6;
+  const fontSize = cols.length > 8 ? "8.5pt" : cols.length > 6 ? "9pt" : "10pt";
+
   return (
-    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "11px", border: `1px solid ${P.s200}`, borderLeft: `3px solid ${accentColor}` }}>
+    <table style={{ width: "100%", borderCollapse: "collapse", fontSize, border: `1px solid ${P.s200}`, borderLeft: `3px solid ${accentColor}` }}>
       <thead>
         <tr>
           <th style={{ padding: "5px 7px", background: "#f5f5f4", borderBottom: `1px solid ${P.s200}` }}></th>
           {cols.map((col) => (
-            <th key={col.key} style={{ padding: "5px 7px", background: "#f5f5f4", borderBottom: `1px solid ${P.s200}`, fontSize: "10px", fontWeight: 700, textTransform: "uppercase", color: P.s500, textAlign: "center" }}>
+            <th
+              key={col.key}
+              style={{
+                padding: rotateHeaders ? "4pt 2pt" : "5px 7px",
+                background: "#f5f5f4",
+                borderBottom: `1px solid ${P.s200}`,
+                fontSize: rotateHeaders ? "8pt" : "10px",
+                fontWeight: 700,
+                textTransform: "uppercase",
+                color: P.s500,
+                textAlign: "center",
+                verticalAlign: "bottom",
+                ...(rotateHeaders ? {
+                  writingMode: "vertical-rl",
+                  transform: "rotate(180deg)",
+                  whiteSpace: "nowrap",
+                  height: "70pt",
+                  letterSpacing: ".03em",
+                } : null),
+              }}
+            >
               {col.label}
             </th>
           ))}

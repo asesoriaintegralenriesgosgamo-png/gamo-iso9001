@@ -48,29 +48,36 @@ const inputStyle = (extra = {}) => ({
 
 function ShapeBox({ type, label, role, isPrint }) {
   const meta = TYPE_META[type] || TYPE_META.activity;
+  // In print mode, render decisions as a labeled rectangle instead of a
+  // rotated diamond — rotated content breaks across page boundaries.
+  const useDiamond = meta.shape === "diamond" && !isPrint;
   const shapeStyle =
     meta.shape === "oval"
-      ? { borderRadius: 999, padding: isPrint ? "6px 18px" : "10px 24px" }
-      : meta.shape === "diamond"
-      ? { transform: "rotate(45deg)", borderRadius: 6, padding: isPrint ? "20px 8px" : "28px 12px", width: 130, height: 130, display: "flex", alignItems: "center", justifyContent: "center" }
-      : { borderRadius: 6, padding: isPrint ? "8px 12px" : "12px 18px" };
+      ? { borderRadius: 999, padding: isPrint ? "5px 14px" : "10px 24px" }
+      : useDiamond
+      ? { transform: "rotate(45deg)", borderRadius: 6, padding: "28px 12px", width: 130, height: 130, display: "flex", alignItems: "center", justifyContent: "center" }
+      : { borderRadius: 6, padding: isPrint ? "6px 12px" : "12px 18px" };
 
-  const inner =
-    meta.shape === "diamond" ? (
-      <div style={{ transform: "rotate(-45deg)", textAlign: "center", lineHeight: 1.3, fontSize: isPrint ? 10 : 11.5 }}>{label || "(sin texto)"}</div>
-    ) : (
-      <div style={{ textAlign: "center", lineHeight: 1.3, fontSize: isPrint ? 10.5 : 12, fontWeight: meta.shape === "rect" ? 500 : 700 }}>
-        {label || "(sin texto)"}
-      </div>
-    );
+  const isDecisionPrint = meta.shape === "diamond" && isPrint;
+
+  const inner = useDiamond ? (
+    <div style={{ transform: "rotate(-45deg)", textAlign: "center", lineHeight: 1.3, fontSize: 11.5 }}>{label || "(sin texto)"}</div>
+  ) : (
+    <div style={{ textAlign: "center", lineHeight: 1.3, fontSize: isPrint ? "9.5pt" : 12, fontWeight: meta.shape === "rect" ? 500 : 700 }}>
+      {isDecisionPrint && (
+        <span style={{ fontSize: "8pt", fontWeight: 800, color: meta.color, letterSpacing: ".06em", display: "block", marginBottom: 2 }}>◆ DECISIÓN</span>
+      )}
+      {label || "(sin texto)"}
+    </div>
+  );
 
   return (
     <div style={{ display: "inline-flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
       <div
         style={{
-          background: meta.shape === "diamond" ? "#fff" : meta.color === "#577080" ? "#fff" : `${meta.color}18`,
+          background: useDiamond ? "#fff" : meta.color === "#577080" ? "#fff" : `${meta.color}18`,
           color: P.s700,
-          border: `2px solid ${meta.color}`,
+          border: `${isPrint ? 1.5 : 2}px solid ${meta.color}`,
           fontWeight: 600,
           ...shapeStyle,
         }}
@@ -78,7 +85,7 @@ function ShapeBox({ type, label, role, isPrint }) {
         {inner}
       </div>
       {role && (
-        <div style={{ fontSize: isPrint ? 9 : 10, color: P.s500, fontStyle: "italic" }}>{role}</div>
+        <div style={{ fontSize: isPrint ? "8pt" : 10, color: P.s500, fontStyle: "italic" }}>{role}</div>
       )}
     </div>
   );
@@ -97,11 +104,19 @@ function Connector({ label }) {
 function FlowchartView({ steps, isPrint }) {
   if (steps.length === 0) return null;
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: isPrint ? 8 : 16 }}>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: isPrint ? 4 : 16 }}>
       {steps.map((step, idx) => {
         const isLast = idx === steps.length - 1;
         return (
-          <div key={step.id} style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+          <div
+            key={step.id}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              ...(isPrint ? { breakInside: "avoid" } : null),
+            }}
+          >
             <ShapeBox type={step.type} label={step.label} role={step.role} isPrint={isPrint} />
             {step.type === "decision" && !isLast && (
               <div style={{ display: "flex", gap: 30, marginTop: 4 }}>

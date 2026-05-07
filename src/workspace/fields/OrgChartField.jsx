@@ -101,7 +101,14 @@ function TreeView({ nodes, isPrint }) {
   const roots = buildTree(nodes);
   if (roots.length === 0) return null;
   return (
-    <div style={{ display: "flex", justifyContent: "center", gap: 18, padding: isPrint ? "8px 0" : "16px 0", overflowX: "auto" }}>
+    <div style={{
+      display: "flex",
+      justifyContent: "center",
+      gap: 18,
+      padding: isPrint ? "8px 0" : "16px 0",
+      overflowX: isPrint ? "visible" : "auto",
+      flexWrap: isPrint ? "wrap" : "nowrap",
+    }}>
       {roots.map((root) => <TreeBranch key={root.id} node={root} level={0} isPrint={isPrint} />)}
     </div>
   );
@@ -180,12 +187,52 @@ function OrgChartEditor({ value, onChange }) {
   );
 }
 
+function maxBranchWidth(roots) {
+  let max = 0;
+  function visit(node) {
+    if (!node.children || node.children.length === 0) return;
+    if (node.children.length > max) max = node.children.length;
+    node.children.forEach(visit);
+  }
+  roots.forEach(visit);
+  return max;
+}
+
+function IndentedListView({ nodes }) {
+  const roots = buildTree(nodes);
+  function renderNode(node, level) {
+    return (
+      <div key={node.id} style={{ marginLeft: level * 14, marginBottom: 3 }}>
+        <div style={{
+          display: "inline-block",
+          background: node.isVacant ? "#fff7e6" : "#fff",
+          border: `1px solid ${node.isVacant ? "#f0d9a8" : "#d6d3d1"}`,
+          borderRadius: 4,
+          padding: "3px 8px",
+          fontSize: "10pt",
+        }}>
+          <span style={{ fontWeight: 700, color: "#44403c" }}>{node.role || "—"}</span>
+          {node.name && <span style={{ color: "#78716c", marginLeft: 6 }}>· {node.name}</span>}
+          {node.isVacant && <span style={{ fontSize: "8pt", fontWeight: 700, color: "#92613a", marginLeft: 6 }}>VACANTE</span>}
+        </div>
+        {node.children && node.children.map((c) => renderNode(c, level + 1))}
+      </div>
+    );
+  }
+  return <div>{roots.map((r) => renderNode(r, 0))}</div>;
+}
+
 function OrgChartPrinter({ value, accentColor }) {
   const nodes = Array.isArray(value?.nodes) ? value.nodes : [];
   if (nodes.length === 0) return null;
+  const roots = buildTree(nodes);
+  const widest = maxBranchWidth(roots);
+  // For wide trees (>4 siblings at any level) the centered horizontal layout
+  // overflows A4 even after CSS scaling — fall back to an indented list.
+  const useIndented = widest > 4 || nodes.length > 12;
   return (
-    <div style={{ borderLeft: `3px solid ${accentColor}`, paddingLeft: 12, overflowX: "auto" }}>
-      <TreeView nodes={nodes} isPrint={true} />
+    <div style={{ borderLeft: `3px solid ${accentColor}`, paddingLeft: 12 }}>
+      {useIndented ? <IndentedListView nodes={nodes} /> : <TreeView nodes={nodes} isPrint={true} />}
     </div>
   );
 }

@@ -42,9 +42,9 @@ const inputStyle = (extra = {}) => ({
 function ProcessCard({ process, onChange, onRemove, isPrint }) {
   if (isPrint) {
     return (
-      <div style={{ background: "#fff", border: `1px solid ${P.s300}`, borderRadius: 4, padding: "5px 8px", minWidth: 110 }}>
-        <div style={{ fontSize: "10px", fontWeight: 700, color: P.s500, letterSpacing: ".03em" }}>{process.code}</div>
-        <div style={{ fontSize: "10.5px", color: P.s700, lineHeight: 1.2, marginTop: 2 }}>{process.name}</div>
+      <div style={{ background: "#fff", border: `1px solid ${P.s300}`, borderRadius: 4, padding: "4pt 6pt", minWidth: "75pt", maxWidth: "120pt", flex: "0 1 auto" }}>
+        <div style={{ fontSize: "8pt", fontWeight: 700, color: P.s500, letterSpacing: ".03em" }}>{process.code}</div>
+        <div style={{ fontSize: "9pt", color: P.s700, lineHeight: 1.2, marginTop: 2 }}>{process.name}</div>
       </div>
     );
   }

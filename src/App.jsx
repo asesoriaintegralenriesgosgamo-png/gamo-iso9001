@@ -3,6 +3,7 @@ import { supabase } from "./supabaseClient";
 import { WorkspaceField } from "./workspace/WorkspaceField.jsx";
 import { getFieldType } from "./workspace/fieldTypes.js";
 import { parseWork, isFilled } from "./workspace/helpers/persistence.js";
+import { PrintReport } from "./print/PrintReport.jsx";
 import {
   KPI_MASTER_TABLE,
   TRAINING_PLAN_TABLE,
@@ -344,13 +345,11 @@ export default function App(){
           .panel { margin: 0 12px 10px 36px; padding: 12px 12px; }
         }
 
-        /* Print Classes */
+        /* Print toggle (page geometry, headers, breaks live in print/printStyles.js) */
         .print-only { display: none; }
         @media print {
           .no-print { display: none !important; }
           .print-only { display: block !important; }
-          body { background: white !important; color: black !important; }
-          @page { margin: 2cm; }
         }
       `}</style>
 
@@ -500,70 +499,9 @@ export default function App(){
       </main>}
       </div>
 
-      {/* Print View */}
+      {/* Print View — formal ISO 9001 PDF report */}
       <div className="print-only">
-        <div style={{textAlign: "center", marginBottom: "40px", paddingBottom: "20px", borderBottom: `2px solid ${P.s900}`}}>
-          <h1 style={{fontSize: "24px", color: P.s900, marginBottom: "5px"}}>GAMO - Documentación ISO 9001</h1>
-          <p style={{fontSize: "14px", color: P.s500}}>Reporte de avance y desarrollo del Sistema de Gestión de Calidad</p>
-          <p style={{fontSize: "12px", color: P.s400, marginTop: "10px"}}>Generado el {new Date().toLocaleDateString('es-MX')}</p>
-        </div>
-
-        {data.map((p, pi) => {
-          let phaseHasContent = false;
-          const phaseContent = p.sections.map((s, si) => {
-            const itemsWithContent = s.items.map((item, ii) => {
-              const wk = `w-${pi}-${si}-${ii}`;
-              const raw = workText[wk];
-              if (!raw || (typeof raw === "string" && raw.trim() === "")) return null;
-              const fieldType = item.fieldType || "textarea";
-              const handler = getFieldType(fieldType);
-              const parsed = parseWork(raw, fieldType, handler.defaultValue);
-              if (!isFilled(parsed.value, fieldType) && !parsed.legacyText) return null;
-              phaseHasContent = true;
-              const Printer = handler.Printer;
-              return (
-                <div key={ii} style={{marginBottom: "20px"}}>
-                  <h4 style={{fontSize: "13px", fontWeight: "bold", color: P.s800, marginBottom: "8px", display:"flex", alignItems:"center", gap:"6px"}}>
-                    <span style={{color: TH[pi].main}}>■</span> {item.text}
-                  </h4>
-                  {parsed.legacyText && (
-                    <div style={{fontSize: "11.5px", color: "#7a5a1f", background: "#fff7e6", border: "1px solid #f0d9a8", padding: "8px 12px", borderRadius: "6px", marginBottom: "8px", whiteSpace: "pre-wrap"}}>
-                      <strong>Texto previo (formato libre):</strong>
-                      <div style={{marginTop: 4}}>{parsed.legacyText}</div>
-                    </div>
-                  )}
-                  <Printer value={parsed.value} config={item.fieldConfig} accentColor={TH[pi].acc} />
-                </div>
-              );
-            });
-            
-            if (itemsWithContent.some(i => i !== null)) {
-              return (
-                <div key={si} style={{marginBottom: "30px"}}>
-                  <h3 style={{fontSize: "15px", color: TH[pi].main, borderBottom: `1px solid ${P.s200}`, paddingBottom: "6px", marginBottom: "15px", textTransform:"uppercase", letterSpacing:".03em"}}>{s.title}</h3>
-                  {itemsWithContent}
-                </div>
-              );
-            }
-            return null;
-          });
-
-          if (phaseHasContent) {
-            return (
-              <div key={pi} style={{marginBottom: "40px", pageBreakInside: "avoid"}}>
-                <h2 style={{fontSize: "18px", color: P.s50, background: TH[pi].main, padding: "8px 14px", borderRadius: "6px", marginBottom: "20px", display: "inline-block"}}>{p.phase}: {p.title}</h2>
-                {phaseContent}
-              </div>
-            );
-          }
-          return null;
-        })}
-        
-        {Object.keys(workText).length === 0 && (
-          <div style={{textAlign: "center", color: P.s500, fontStyle: "italic", marginTop: "50px"}}>
-            Aún no hay información documentada en los espacios de trabajo.
-          </div>
-        )}
+        <PrintReport data={data} workText={workText} />
       </div>
     </div>
   );
