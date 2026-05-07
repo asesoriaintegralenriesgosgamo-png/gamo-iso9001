@@ -541,7 +541,7 @@ export default function App(){
           if (phaseHasContent) {
             return (
               <div key={pi} style={{marginBottom: "40px", pageBreakInside: "avoid"}}>
-                <h2 style={{fontSize: "18px", color: P.s50", background: TH[pi].main, padding: "8px 14px", borderRadius: "6px", marginBottom: "20px", display: "inline-block"}}>{p.phase}: {p.title}</h2>
+                <h2 style={{fontSize: "18px", color: P.s50, background: TH[pi].main, padding: "8px 14px", borderRadius: "6px", marginBottom: "20px", display: "inline-block"}}>{p.phase}: {p.title}</h2>
                 {phaseContent}
               </div>
             );
