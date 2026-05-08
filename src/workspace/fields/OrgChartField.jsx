@@ -100,14 +100,19 @@ function TreeBranch({ node, level, isPrint }) {
 function TreeView({ nodes, isPrint }) {
   const roots = buildTree(nodes);
   if (roots.length === 0) return null;
+  // width:max-content + margin:0 auto centers the tree when it fits the
+  // scrollable parent and aligns it to the start when it overflows — fixing
+  // the case where justify-content:center hid the leftmost branches behind
+  // the unscrollable origin.
   return (
     <div style={{
       display: "flex",
-      justifyContent: "center",
       gap: 18,
       padding: isPrint ? "8px 0" : "16px 0",
-      overflowX: isPrint ? "visible" : "auto",
+      width: isPrint ? "100%" : "max-content",
+      margin: isPrint ? 0 : "0 auto",
       flexWrap: isPrint ? "wrap" : "nowrap",
+      justifyContent: isPrint ? "center" : "flex-start",
     }}>
       {roots.map((root) => <TreeBranch key={root.id} node={root} level={0} isPrint={isPrint} />)}
     </div>
@@ -170,17 +175,36 @@ function OrgChartEditor({ value, onChange }) {
   const setNodes = (next) => onChange({ ...(value || {}), nodes: next });
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <div style={{ background: "#fff", border: `1px solid ${P.s200}`, borderRadius: 6, padding: 12, overflowX: "auto" }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: P.s500, textTransform: "uppercase", letterSpacing: ".04em", marginBottom: 6 }}>
-          Vista preliminar
+      <div style={{ background: "#fff", border: `1px solid ${P.s200}`, borderRadius: 6, padding: 12 }}>
+        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 6 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: P.s500, textTransform: "uppercase", letterSpacing: ".04em" }}>
+            Vista preliminar
+          </div>
+          {nodes.length > 0 && (
+            <div style={{ fontSize: 10, color: P.s400, fontStyle: "italic" }}>
+              Desplázate horizontalmente si el organigrama es muy ancho ↔
+            </div>
+          )}
         </div>
         {nodes.length === 0 ? (
           <div style={{ padding: 18, textAlign: "center", color: P.s400, fontStyle: "italic", fontSize: 12 }}>
             La estructura aparecerá aquí conforme agregues puestos.
           </div>
         ) : (
-          <TreeView nodes={nodes} isPrint={false} />
+          <div
+            style={{
+              overflowX: "auto",
+              border: `1px solid ${P.borderL || "#f0eeea"}`,
+              borderRadius: 4,
+              background: "#fafaf9",
+            }}
+          >
+            <TreeView nodes={nodes} isPrint={false} />
+          </div>
         )}
+        <div style={{ marginTop: 6, fontSize: 10.5, color: P.s500 }}>
+          {nodes.length > 0 && <span>{nodes.length} puesto{nodes.length === 1 ? "" : "s"} en el organigrama. Todos aparecen en la lista editable abajo. ↓</span>}
+        </div>
       </div>
       <NodeListEditor nodes={nodes} onChange={setNodes} />
     </div>
