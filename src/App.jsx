@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "./supabaseClient";
 import { WorkspaceField } from "./workspace/WorkspaceField.jsx";
 import { getFieldType } from "./workspace/fieldTypes.js";
@@ -214,8 +214,12 @@ export default function App(){
   const [openGuide,setOpenGuide]=useState({});
   const [openWork,setOpenWork]=useState({});
   const [workText,setWorkText]=useState({});
-  const [saved,setSaved]=useState({});
   const [loading,setLoading]=useState(true);
+
+  // Tracks work keys that have local edits not yet confirmed in Supabase.
+  // Used to prevent realtime updates (from another tab/device) from clobbering
+  // an in-progress edit between keystrokes and save completion.
+  const dirtyKeysRef = useRef(new Set());
 
   // Load from Supabase and listen to realtime updates
   useEffect(()=>{
@@ -255,7 +259,17 @@ export default function App(){
                 return n;
               });
             }
-            if(s.work) setWorkText(s.work);
+            if(s.work) {
+              // Merge: take server values for clean keys, keep local values
+              // for keys with unsaved edits in flight.
+              setWorkText(prev => {
+                const next = { ...s.work };
+                dirtyKeysRef.current.forEach(k => {
+                  if (k in prev) next[k] = prev[k];
+                });
+                return next;
+              });
+            }
             if(s.active) setActive(s.active);
           })
           .subscribe();
@@ -269,34 +283,52 @@ export default function App(){
     };
   },[]);
 
-  // Save to Supabase
+  // Save to Supabase. Re-throws on failure so callers can react (auto-save
+  // status indicator in WorkspaceField needs to know success vs. error).
   const persist = useCallback(async (d,w,a)=>{
     const checks={};
     d.forEach((p,pi)=>p.sections.forEach((s,si)=>s.items.forEach((it,ii)=>{
       if(it.done) checks[`${pi}-${si}-${ii}`]=true;
     })));
-    try{
-      const payload = {checks,work:w,active:a};
-      await supabase.from('app_state').update({ data: payload }).eq('id', 1);
-    }catch(e){console.log("Save error",e)}
+    const payload = {checks,work:w,active:a};
+    const { error } = await supabase.from('app_state').update({ data: payload }).eq('id', 1);
+    if (error) throw error;
   },[]);
+
+  // Refs let saveWork stay stable across renders while still reading the
+  // latest state when a debounced save fires from inside WorkspaceField.
+  const workTextRef = useRef(workText);
+  const dataRef = useRef(data);
+  const activeRef = useRef(active);
+  useEffect(() => { workTextRef.current = workText; }, [workText]);
+  useEffect(() => { dataRef.current = data; }, [data]);
+  useEffect(() => { activeRef.current = active; }, [active]);
 
   const tog=(pi,si,ii)=>{
     setData(prev=>{
       const n=JSON.parse(JSON.stringify(prev));
       n[pi].sections[si].items[ii].done=!n[pi].sections[si].items[ii].done;
-      persist(n,workText,active);
+      persist(n,workTextRef.current,activeRef.current).catch(e=>console.log("Save error",e));
       return n;
     });
   };
 
-  const saveWork=(key,val)=>{
-    const nw={...workText,[key]:val};
+  // Returns true on successful persistence, false on error. WorkspaceField
+  // uses this to drive its status indicator.
+  const saveWork = useCallback(async (key, val) => {
+    const nw = { ...workTextRef.current, [key]: val };
     setWorkText(nw);
-    setSaved(p=>({...p,[key]:true}));
-    persist(data,nw,active);
-    setTimeout(()=>setSaved(p=>({...p,[key]:false})),1500);
-  };
+    dirtyKeysRef.current.add(key);
+    try {
+      await persist(dataRef.current, nw, activeRef.current);
+      dirtyKeysRef.current.delete(key);
+      return true;
+    } catch (e) {
+      console.log("Save error", e);
+      // Keep key dirty so realtime won't clobber the unsaved value.
+      return false;
+    }
+  }, [persist]);
 
   const cnt=(p)=>{let d=0,t=0;p.sections.forEach(s=>s.items.forEach(i=>{t++;if(i.done)d++;}));return{d,t};};
   const glob=()=>{let d=0,t=0;data.forEach(p=>p.sections.forEach(s=>s.items.forEach(i=>{t++;if(i.done)d++;})));return{d,t};};
@@ -441,12 +473,15 @@ export default function App(){
                 const gOpen=openGuide[gk];
                 const wOpen=openWork[wk];
                 const wVal=workText[wk]||"";
-                const isSaved=saved[wk];
                 const fieldType=item.fieldType||"textarea";
                 const handler=getFieldType(fieldType);
                 const parsedForIndicator=parseWork(wVal,fieldType,handler.defaultValue);
                 const filled=isFilled(parsedForIndicator.value,fieldType)||Boolean(parsedForIndicator.legacyText);
-                return <div key={ii} style={{borderBottom:ii<sec.items.length-1?`1px solid ${P.borderL}`:"none"}}>
+                return <div key={ii} style={{
+                  borderBottom: ii<sec.items.length-1 ? `1px solid ${P.borderL}` : "none",
+                  background: item.done ? "#f0f6f0" : (filled ? "#fef9ef" : "transparent"),
+                  transition: "background .25s",
+                }}>
                   {/* Main row */}
                   <div className="row" onClick={()=>tog(ai,si,ii)} style={{padding:"10px 16px",display:"flex",gap:11,alignItems:"flex-start",cursor:"pointer",borderRadius:0,transition:"background .12s"}}>
                     <div style={{width:19,height:19,borderRadius:5,flexShrink:0,marginTop:1,border:item.done?"none":`1.5px solid ${P.s300}`,background:item.done?th.acc:"transparent",display:"flex",alignItems:"center",justifyContent:"center",transition:"all .2s"}}>{item.done&&I.chk("#fff")}</div>
@@ -487,8 +522,11 @@ export default function App(){
                     rawValue={wVal}
                     fieldType={fieldType}
                     fieldConfig={item.fieldConfig}
-                    isSaved={isSaved}
-                    onLiveChange={(serialized)=>setWorkText(p=>({...p,[wk]:serialized}))}
+                    storageKey={wk}
+                    onLiveChange={(serialized)=>{
+                      dirtyKeysRef.current.add(wk);
+                      setWorkText(p=>({...p,[wk]:serialized}));
+                    }}
                     onSave={(serialized)=>saveWork(wk,serialized)}
                   />}
                 </div>;
