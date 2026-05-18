@@ -4,6 +4,8 @@
  * so the ~157 exercises without a fieldType render unchanged.
  */
 
+import { useLayoutEffect, useRef } from "react";
+
 const P = {
   s200: "#e7e5e4",
   s700: "#44403c",
@@ -15,12 +17,23 @@ const P = {
  * @param {(next: string) => void} props.onChange
  */
 function TextareaEditor({ value, onChange }) {
+  const ref = useRef(null);
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, [value]);
+
   return (
     <textarea
+      ref={ref}
       value={value || ""}
       onChange={(e) => onChange(e.target.value)}
       onClick={(e) => e.stopPropagation()}
       placeholder="Escribe aquí tus notas, borradores, definiciones..."
+      rows={4}
       style={{
         width: "100%",
         minHeight: 100,
@@ -31,6 +44,8 @@ function TextareaEditor({ value, onChange }) {
         fontSize: 12.5,
         lineHeight: 1.65,
         color: P.s700,
+        overflow: "hidden",
+        resize: "none",
       }}
     />
   );

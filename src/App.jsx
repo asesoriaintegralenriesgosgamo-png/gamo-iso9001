@@ -388,7 +388,7 @@ export default function App(){
       <div className="no-print">
       {/* Header */}
       <header className="app-header" style={{background:P.s900,color:P.s50}}>
-        <div style={{maxWidth:860,margin:"0 auto"}}>
+        <div style={{maxWidth:1200,margin:"0 auto"}}>
           <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:22}}>
             <div style={{width:38,height:38,borderRadius:10,background:"linear-gradient(135deg,#5a7260,#7a9680)",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 10px rgba(90,114,96,.35)"}}>{I.layers("#fff")}</div>
             <div>
@@ -429,7 +429,7 @@ export default function App(){
       </header>
 
       {/* Tabs */}
-      <nav className="app-nav" style={{maxWidth:860,margin:"0 auto",display:"flex",gap:5,overflowX:"auto",WebkitOverflowScrolling:"touch"}}>
+      <nav className="app-nav" style={{maxWidth:1200,margin:"0 auto",display:"flex",gap:5,overflowX:"auto",WebkitOverflowScrolling:"touch"}}>
         {data.map((p,i)=>{
           const{d,t}=cnt(p);const on=p.id===active;const c=TH[i];
           return <button key={p.id} className="tab" onClick={()=>{setActive(p.id);persist(data,workText,p.id);}} style={{flexShrink:0,padding:"11px 14px",borderRadius:10,background:on?c.main:"#fff",color:on?"#fff":P.s500,fontSize:11.5,fontWeight:600,boxShadow:on?`0 3px 14px ${c.main}20`:"0 1px 2px rgba(0,0,0,.04)",border:on?"none":`1px solid ${P.border}`,display:"flex",flexDirection:"column",alignItems:"center",gap:5,minWidth:76}}>
@@ -441,7 +441,7 @@ export default function App(){
       </nav>
 
       {/* Content */}
-      {ap&&<main className="app-main" style={{maxWidth:860,margin:"0 auto"}}>
+      {ap&&<main className="app-main" style={{maxWidth:1200,margin:"0 auto"}}>
         <div style={{marginBottom:18}}>
           <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:5}}>
             {I[ap.iconKey](th.main)}
